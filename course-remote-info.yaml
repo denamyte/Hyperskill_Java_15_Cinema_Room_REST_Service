@@ -3,14 +3,14 @@ hyperskill_project:
   ide_files: https://stepik.org/media/attachments/lesson/539847/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: Thu, 01 Jan 1970 00:00:00 UTC
+update_date: Mon, 26 Jul 2021 21:57:06 UTC
 stages:
 - id: 945
   step: 13375
   is_completed: true
 - id: 946
   step: 13376
-  is_completed: false
+  is_completed: true
 - id: 947
   step: 13377
   is_completed: false
@@ -181,10 +181,6 @@ topics:
     theory_id: 3624
   - title: The List interface
     theory_id: 3581
-  - title: Interface
-    theory_id: 3615
-  - title: Comparable
-    theory_id: 14456
   - title: Defining classes
     theory_id: 3618
   - title: Constructor
@@ -209,6 +205,10 @@ topics:
     theory_id: 3622
   - title: Objects
     theory_id: 4727
+  - title: Interface
+    theory_id: 3615
+  - title: Comparable
+    theory_id: 14456
   - title: Boxing and unboxing
     theory_id: 3595
   1:

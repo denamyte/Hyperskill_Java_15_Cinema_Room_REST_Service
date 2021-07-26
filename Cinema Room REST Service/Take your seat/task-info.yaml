@@ -213,6 +213,167 @@ files:
         };
     }
   learner_created: false
+- name: src/cinema/entities/Seat.java
+  visible: true
+  text: |
+    package cinema.entities;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+
+    public class Seat {
+
+        private final int row;
+        private final int column;
+
+        public Seat(int row, int column) {
+            this.row = row;
+            this.column = column;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public int getColumn() {
+            return column;
+        }
+
+        @JsonIgnore
+        public String getKey() {
+            return row + "_" + column;
+        }
+    }
+  learner_created: true
+- name: src/cinema/entities/AvailableSeats.java
+  visible: true
+  text: |
+    package cinema.entities;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+
+    import java.util.*;
+
+    public class AvailableSeats {
+        @JsonProperty("total_rows")
+        private int rows;
+        @JsonProperty("total_columns")
+        private int columns;
+        @JsonProperty("available_seats")
+        private Collection<Seat> seats = Collections.emptyList();
+
+        public int getRows() {
+            return rows;
+        }
+
+        public AvailableSeats setRows(int rows) {
+            this.rows = rows;
+            return this;
+        }
+
+        public int getColumns() {
+            return columns;
+        }
+
+        public AvailableSeats setColumns(int columns) {
+            this.columns = columns;
+            return this;
+        }
+
+        public Collection<Seat> getSeats() {
+            return new ArrayList<>(seats);
+        }
+
+        public AvailableSeats setSeats(Collection<Seat> seats) {
+            this.seats = seats == null ? Collections.emptyList() : new ArrayList<>(seats);
+            return this;
+        }
+
+    }
+  learner_created: true
+- name: src/cinema/controller/CinemaController.java
+  visible: true
+  text: |
+    package cinema.controller;
+
+    import cinema.entities.AvailableSeats;
+    import cinema.storage.CinemaStorage;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.RestController;
+
+    @RestController
+    public class CinemaController {
+
+        private final CinemaStorage storage;
+
+        public CinemaController(CinemaStorage storage) {
+            this.storage = storage;
+        }
+
+        @GetMapping("/seats")
+        AvailableSeats getSeats() {
+            return storage.getAvailableSeats();
+        }
+    }
+  learner_created: true
+- name: src/cinema/storage/CinemaStorageInMemory.java
+  visible: true
+  text: |
+    package cinema.storage;
+
+    import cinema.entities.AvailableSeats;
+    import cinema.entities.Seat;
+    import org.springframework.stereotype.Repository;
+
+    import java.util.LinkedHashMap;
+    import java.util.Map;
+
+    @Repository
+    public class CinemaStorageInMemory implements CinemaStorage {
+
+        private static final int ROW_COUNT = 9;
+        private static final int COL_COUNT = 9;
+        private Map<String, Seat> availableSeats;
+
+        {
+            availableSeats = new LinkedHashMap<>();
+            for (int row = 1; row <= ROW_COUNT; row++) {
+                for (int col = 1; col <= COL_COUNT; col++) {
+                    Seat seat = new Seat(row, col);
+                    availableSeats.put(seat.getKey(), seat);
+                }
+            }
+        }
+
+        @Override
+        public AvailableSeats getAvailableSeats() {
+            return new AvailableSeats()
+                    .setRows(ROW_COUNT)
+                    .setColumns(COL_COUNT)
+                    .setSeats(availableSeats.values());
+        }
+    }
+  learner_created: true
+- name: src/cinema/storage/CinemaStorage.java
+  visible: true
+  text: |
+    package cinema.storage;
+
+    import cinema.entities.AvailableSeats;
+
+    public interface CinemaStorage {
+
+        AvailableSeats getAvailableSeats();
+    }
+  learner_created: true
+- name: src/cinema/entities/request/PurchaseSeatBody.java
+  visible: true
+  learner_created: true
+- name: src/cinema/storage/TicketBadRequestException.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/189/stages/946/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Mon, 26 Jul 2021 23:32:50 UTC
 record: -1
