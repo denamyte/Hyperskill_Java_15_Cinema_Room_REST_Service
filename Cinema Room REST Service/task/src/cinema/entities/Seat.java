@@ -36,6 +36,10 @@ public class Seat {
         this.purchased = true;
     }
 
+    public void makeAvailable() {
+        this.purchased = false;
+    }
+
     @JsonIgnore
     public String getKey() {
         return getKey(row, column);

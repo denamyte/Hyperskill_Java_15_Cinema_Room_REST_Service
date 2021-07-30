@@ -3,7 +3,7 @@ hyperskill_project:
   ide_files: https://stepik.org/media/attachments/lesson/539847/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: Mon, 26 Jul 2021 21:57:06 UTC
+update_date: Fri, 30 Jul 2021 21:03:58 UTC
 stages:
 - id: 945
   step: 13375
@@ -13,7 +13,7 @@ stages:
   is_completed: true
 - id: 947
   step: 13377
-  is_completed: false
+  is_completed: true
 - id: 948
   step: 13378
   is_completed: false
@@ -23,10 +23,10 @@ topics:
     theory_id: 3739
   - title: JVM, JRE, and JDK
     theory_id: 3499
-  - title: Immutability
-    theory_id: 7929
   - title: Units of information
     theory_id: 6865
+  - title: Immutability
+    theory_id: 7929
   - title: Computer algorithms
     theory_id: 4953
   - title: The big O notation
@@ -67,8 +67,10 @@ topics:
     theory_id: 13611
   - title: Getting data from REST
     theory_id: 13287
-  - title: External resources
-    theory_id: 6216
+  - title: JSON
+    theory_id: 6854
+  - title: YAML
+    theory_id: 12722
   - title: Computer programming
     theory_id: 8739
   - title: Introduction to Java
@@ -79,8 +81,14 @@ topics:
     theory_id: 3521
   - title: Printing data
     theory_id: 3749
+  - title: External resources
+    theory_id: 6216
   - title: Types and variables
     theory_id: 3518
+  - title: Sizes and ranges
+    theory_id: 3532
+  - title: Type casting
+    theory_id: 3510
   - title: Comments
     theory_id: 3520
   - title: Coding style conventions
@@ -115,14 +123,6 @@ topics:
     theory_id: 3507
   - title: Switch statement
     theory_id: 3504
-  - title: JSON
-    theory_id: 6854
-  - title: YAML
-    theory_id: 12722
-  - title: Sizes and ranges
-    theory_id: 3532
-  - title: Type casting
-    theory_id: 3510
   - title: Libraries
     theory_id: 8504
   - title: Frameworks

@@ -1,10 +1,11 @@
-package cinema.entities;
+package cinema.entities.response;
 
+import cinema.entities.Seat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.*;
 
-public class AvailableSeats {
+public class AvailableSeatsResponse {
     @JsonProperty("total_rows")
     private int rows;
     @JsonProperty("total_columns")
@@ -16,7 +17,7 @@ public class AvailableSeats {
         return rows;
     }
 
-    public AvailableSeats setRows(int rows) {
+    public AvailableSeatsResponse setRows(int rows) {
         this.rows = rows;
         return this;
     }
@@ -25,7 +26,7 @@ public class AvailableSeats {
         return columns;
     }
 
-    public AvailableSeats setColumns(int columns) {
+    public AvailableSeatsResponse setColumns(int columns) {
         this.columns = columns;
         return this;
     }
@@ -34,7 +35,7 @@ public class AvailableSeats {
         return new ArrayList<>(seats);
     }
 
-    public AvailableSeats setSeats(Collection<Seat> seats) {
+    public AvailableSeatsResponse setSeats(Collection<Seat> seats) {
         this.seats = seats == null ? Collections.emptyList() : new ArrayList<>(seats);
         return this;
     }

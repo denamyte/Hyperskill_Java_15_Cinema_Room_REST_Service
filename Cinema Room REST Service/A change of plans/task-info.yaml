@@ -286,6 +286,269 @@ files:
         };
     }
   learner_created: false
+- name: src/cinema/storage/TicketBadRequestException.java
+  visible: true
+  text: |
+    package cinema.storage;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    public class TicketBadRequestException extends RuntimeException {
+        public TicketBadRequestException(String message) {
+            super(message);
+        }
+    }
+  learner_created: true
+- name: src/cinema/entities/Seat.java
+  visible: true
+  text: |
+    package cinema.entities;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+
+    public class Seat {
+
+        private final int row;
+        private final int column;
+        private final int price;
+        @JsonIgnore
+        private boolean purchased;
+
+        public Seat(int row, int column, int price) {
+            this.row = row;
+            this.column = column;
+            this.price = price;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public int getColumn() {
+            return column;
+        }
+
+        public int getPrice() {
+            return price;
+        }
+
+        public boolean isPurchased() {
+            return purchased;
+        }
+
+        public void purchase() {
+            this.purchased = true;
+        }
+
+        @JsonIgnore
+        public String getKey() {
+            return getKey(row, column);
+        }
+
+        public static String getKey(int row, int column) {
+            return row + "_" + column;
+        }
+    }
+  learner_created: true
+- name: src/cinema/controller/CinemaController.java
+  visible: true
+  text: |
+    package cinema.controller;
+
+    import cinema.entities.AvailableSeats;
+    import cinema.entities.Seat;
+    import cinema.entities.request.PurchaseSeatBody;
+    import cinema.storage.CinemaStorage;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+
+    import java.util.Collections;
+
+    @RestController
+    public class CinemaController {
+
+        private final CinemaStorage storage;
+
+        public CinemaController(CinemaStorage storage) {
+            this.storage = storage;
+        }
+
+        @GetMapping("/seats")
+        public AvailableSeats getSeats() {
+            return storage.getAvailableSeats();
+        }
+
+        @PostMapping("/purchase")
+        public ResponseEntity<Seat> purchaseSeat(@RequestBody PurchaseSeatBody body) {
+            try {
+                return new ResponseEntity<>(storage.purchaseSeat(body.row, body.column), HttpStatus.OK);
+            } catch (Exception e) {
+                return new ResponseEntity(Collections.singletonMap("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+        }
+    }
+  learner_created: true
+- name: src/cinema/storage/CinemaStorageInMemory.java
+  visible: true
+  text: |
+    package cinema.storage;
+
+    import cinema.entities.AvailableSeats;
+    import cinema.entities.Seat;
+    import org.springframework.stereotype.Repository;
+
+    import java.util.Collection;
+    import java.util.LinkedHashMap;
+    import java.util.Map;
+    import java.util.function.Predicate;
+    import java.util.stream.Collectors;
+
+    @Repository
+    public class CinemaStorageInMemory implements CinemaStorage {
+
+        private static final int ROW_COUNT = 9;
+        private static final int COL_COUNT = 9;
+        private Map<String, Seat> seatMap;
+
+        {
+            seatMap = new LinkedHashMap<>();
+            for (int row = 1; row <= ROW_COUNT; row++) {
+                int price = getPrice(row);
+                for (int col = 1; col <= COL_COUNT; col++) {
+                    Seat seat = new Seat(row, col, price);
+                    seatMap.put(seat.getKey(), seat);
+                }
+            }
+        }
+
+        private static int getPrice(int row) {
+            return row <= 4 ? 10 : 8;
+        }
+
+        @Override
+        public AvailableSeats getAvailableSeats() {
+            return new AvailableSeats()
+                    .setRows(ROW_COUNT)
+                    .setColumns(COL_COUNT)
+                    .setSeats(getAvailableSeatsCollection());
+        }
+
+        @Override
+        public Seat purchaseSeat(int row, int column) {
+            Seat seat = getSeat(row, column);
+            checkSeatIsAvailable(seat);
+            seat.purchase();
+            return seat;
+        }
+
+        private Seat getSeat(int row, int column) {
+            Seat seat = seatMap.get(Seat.getKey(row, column));
+            if (seat == null) {
+                throw new TicketBadRequestException("The number of a row or a column is out of bounds!");
+            }
+            return seat;
+        }
+
+        private void checkSeatIsAvailable(Seat seat) {
+            if (seat.isPurchased()) {
+                throw new TicketBadRequestException("The ticket has been already purchased!");
+            }
+        }
+
+        private Collection<Seat> getAvailableSeatsCollection() {
+            return seatMap.values()
+                    .stream()
+                    .filter(Predicate.not(Seat::isPurchased))
+                    .collect(Collectors.toList());
+        }
+    }
+  learner_created: true
+- name: src/cinema/storage/CinemaStorage.java
+  visible: true
+  text: |
+    package cinema.storage;
+
+    import cinema.entities.AvailableSeats;
+    import cinema.entities.Seat;
+
+    public interface CinemaStorage {
+
+        AvailableSeats getAvailableSeats();
+
+        Seat purchaseSeat(int row, int column);
+    }
+  learner_created: true
+- name: src/cinema/entities/response/PurchasedTicketResponse.java
+  visible: true
+  learner_created: true
+- name: src/cinema/entities/response/AvailableSeatsResponse.java
+  visible: true
+  text: |
+    package cinema.entities;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+
+    import java.util.*;
+
+    public class AvailableSeats {
+        @JsonProperty("total_rows")
+        private int rows;
+        @JsonProperty("total_columns")
+        private int columns;
+        @JsonProperty("available_seats")
+        private Collection<Seat> seats = Collections.emptyList();
+
+        public int getRows() {
+            return rows;
+        }
+
+        public AvailableSeats setRows(int rows) {
+            this.rows = rows;
+            return this;
+        }
+
+        public int getColumns() {
+            return columns;
+        }
+
+        public AvailableSeats setColumns(int columns) {
+            this.columns = columns;
+            return this;
+        }
+
+        public Collection<Seat> getSeats() {
+            return new ArrayList<>(seats);
+        }
+
+        public AvailableSeats setSeats(Collection<Seat> seats) {
+            this.seats = seats == null ? Collections.emptyList() : new ArrayList<>(seats);
+            return this;
+        }
+
+    }
+  learner_created: true
+- name: src/cinema/entities/request/PurchaseSeatRequest.java
+  visible: true
+  text: |
+    package cinema.entities.request;
+
+    public class PurchaseSeatBody {
+        public int row;
+        public int column;
+    }
+  learner_created: true
+- name: src/cinema/entities/request/ReturnTicketRequest.java
+  visible: true
+  learner_created: true
+- name: src/cinema/entities/response/ReturnTickedResponse.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/189/stages/947/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Fri, 30 Jul 2021 22:09:36 UTC
 record: -1

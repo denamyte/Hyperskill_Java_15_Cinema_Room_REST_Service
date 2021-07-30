@@ -1,11 +1,14 @@
 package cinema.storage;
 
-import cinema.entities.AvailableSeats;
-import cinema.entities.Seat;
+import cinema.entities.response.AvailableSeatsResponse;
+import cinema.entities.response.PurchasedTicketResponse;
+import cinema.entities.response.ReturnTickedResponse;
 
 public interface CinemaStorage {
 
-    AvailableSeats getAvailableSeats();
+    AvailableSeatsResponse getAvailableSeats();
 
-    Seat purchaseSeat(int row, int column);
+    PurchasedTicketResponse purchaseTicket(int row, int column);
+
+    ReturnTickedResponse returnTicket(String token);
 }

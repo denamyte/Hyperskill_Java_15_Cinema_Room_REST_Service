@@ -1,12 +1,12 @@
 package cinema.storage;
 
-import cinema.entities.AvailableSeats;
+import cinema.entities.response.AvailableSeatsResponse;
 import cinema.entities.Seat;
+import cinema.entities.response.PurchasedTicketResponse;
+import cinema.entities.response.ReturnTickedResponse;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -15,7 +15,8 @@ public class CinemaStorageInMemory implements CinemaStorage {
 
     private static final int ROW_COUNT = 9;
     private static final int COL_COUNT = 9;
-    private Map<String, Seat> seatMap;
+    private final Map<String, Seat> seatMap;
+    private final Map<String, Seat> tokenToSeatMap = new HashMap<>();
 
     {
         seatMap = new LinkedHashMap<>();
@@ -33,22 +34,34 @@ public class CinemaStorageInMemory implements CinemaStorage {
     }
 
     @Override
-    public AvailableSeats getAvailableSeats() {
-        return new AvailableSeats()
+    public AvailableSeatsResponse getAvailableSeats() {
+        return new AvailableSeatsResponse()
                 .setRows(ROW_COUNT)
                 .setColumns(COL_COUNT)
                 .setSeats(getAvailableSeatsCollection());
     }
 
     @Override
-    public Seat purchaseSeat(int row, int column) {
-        Seat seat = getSeat(row, column);
+    public PurchasedTicketResponse purchaseTicket(int row, int column) {
+        Seat seat = getSeatFromStorage(row, column);
         checkSeatIsAvailable(seat);
         seat.purchase();
-        return seat;
+        String token = UUID.randomUUID().toString();
+        tokenToSeatMap.put(token, seat);
+        return new PurchasedTicketResponse(token, seat);
     }
 
-    private Seat getSeat(int row, int column) {
+    @Override
+    public ReturnTickedResponse returnTicket(String token) {
+        Seat seat = tokenToSeatMap.remove(token);
+        if (seat == null) {
+            throw new TicketBadRequestException("Wrong token!");
+        }
+        makeSeatAvailable(seat.getRow(), seat.getColumn());
+        return new ReturnTickedResponse(seat);
+    }
+
+    private Seat getSeatFromStorage(int row, int column) {
         Seat seat = seatMap.get(Seat.getKey(row, column));
         if (seat == null) {
             throw new TicketBadRequestException("The number of a row or a column is out of bounds!");
@@ -67,5 +80,9 @@ public class CinemaStorageInMemory implements CinemaStorage {
                 .stream()
                 .filter(Predicate.not(Seat::isPurchased))
                 .collect(Collectors.toList());
+    }
+
+    private void makeSeatAvailable(int row, int column) {
+        getSeatFromStorage(row, column).makeAvailable();
     }
 }
