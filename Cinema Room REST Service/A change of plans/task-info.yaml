@@ -342,6 +342,10 @@ files:
             this.purchased = true;
         }
 
+        public void makeAvailable() {
+            this.purchased = false;
+        }
+
         @JsonIgnore
         public String getKey() {
             return getKey(row, column);
@@ -357,10 +361,13 @@ files:
   text: |
     package cinema.controller;
 
-    import cinema.entities.AvailableSeats;
-    import cinema.entities.Seat;
-    import cinema.entities.request.PurchaseSeatBody;
+    import cinema.entities.request.PurchaseSeatRequest;
+    import cinema.entities.request.ReturnTicketRequest;
+    import cinema.entities.response.AvailableSeatsResponse;
+    import cinema.entities.response.PurchasedTicketResponse;
+    import cinema.entities.response.ReturnTickedResponse;
     import cinema.storage.CinemaStorage;
+    import cinema.storage.TicketBadRequestException;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
@@ -377,17 +384,30 @@ files:
         }
 
         @GetMapping("/seats")
-        public AvailableSeats getSeats() {
+        public AvailableSeatsResponse getSeats() {
             return storage.getAvailableSeats();
         }
 
         @PostMapping("/purchase")
-        public ResponseEntity<Seat> purchaseSeat(@RequestBody PurchaseSeatBody body) {
+        public ResponseEntity<PurchasedTicketResponse> purchaseTicket(@RequestBody PurchaseSeatRequest body) {
             try {
-                return new ResponseEntity<>(storage.purchaseSeat(body.row, body.column), HttpStatus.OK);
-            } catch (Exception e) {
-                return new ResponseEntity(Collections.singletonMap("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(storage.purchaseTicket(body.row, body.column), HttpStatus.OK);
+            } catch (TicketBadRequestException e) {
+                return getBadRequestEntity(e);
             }
+        }
+
+        @PostMapping("/return")
+        public ResponseEntity<ReturnTickedResponse> returnTicket(@RequestBody ReturnTicketRequest body) {
+            try {
+                return new ResponseEntity<>(storage.returnTicket(body.token), HttpStatus.OK);
+            } catch (TicketBadRequestException e) {
+                return getBadRequestEntity(e);
+            }
+        }
+
+        private <T> ResponseEntity<T> getBadRequestEntity(Exception e) {
+            return new ResponseEntity(Collections.singletonMap("error", e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
   learner_created: true
@@ -396,13 +416,13 @@ files:
   text: |
     package cinema.storage;
 
-    import cinema.entities.AvailableSeats;
+    import cinema.entities.response.AvailableSeatsResponse;
     import cinema.entities.Seat;
+    import cinema.entities.response.PurchasedTicketResponse;
+    import cinema.entities.response.ReturnTickedResponse;
     import org.springframework.stereotype.Repository;
 
-    import java.util.Collection;
-    import java.util.LinkedHashMap;
-    import java.util.Map;
+    import java.util.*;
     import java.util.function.Predicate;
     import java.util.stream.Collectors;
 
@@ -411,7 +431,8 @@ files:
 
         private static final int ROW_COUNT = 9;
         private static final int COL_COUNT = 9;
-        private Map<String, Seat> seatMap;
+        private final Map<String, Seat> seatMap;
+        private final Map<String, Seat> tokenToSeatMap = new HashMap<>();
 
         {
             seatMap = new LinkedHashMap<>();
@@ -429,22 +450,34 @@ files:
         }
 
         @Override
-        public AvailableSeats getAvailableSeats() {
-            return new AvailableSeats()
+        public AvailableSeatsResponse getAvailableSeats() {
+            return new AvailableSeatsResponse()
                     .setRows(ROW_COUNT)
                     .setColumns(COL_COUNT)
                     .setSeats(getAvailableSeatsCollection());
         }
 
         @Override
-        public Seat purchaseSeat(int row, int column) {
-            Seat seat = getSeat(row, column);
+        public PurchasedTicketResponse purchaseTicket(int row, int column) {
+            Seat seat = getSeatFromStorage(row, column);
             checkSeatIsAvailable(seat);
             seat.purchase();
-            return seat;
+            String token = UUID.randomUUID().toString();
+            tokenToSeatMap.put(token, seat);
+            return new PurchasedTicketResponse(token, seat);
         }
 
-        private Seat getSeat(int row, int column) {
+        @Override
+        public ReturnTickedResponse returnTicket(String token) {
+            Seat seat = tokenToSeatMap.remove(token);
+            if (seat == null) {
+                throw new TicketBadRequestException("Wrong token!");
+            }
+            makeSeatAvailable(seat.getRow(), seat.getColumn());
+            return new ReturnTickedResponse(seat);
+        }
+
+        private Seat getSeatFromStorage(int row, int column) {
             Seat seat = seatMap.get(Seat.getKey(row, column));
             if (seat == null) {
                 throw new TicketBadRequestException("The number of a row or a column is out of bounds!");
@@ -464,6 +497,10 @@ files:
                     .filter(Predicate.not(Seat::isPurchased))
                     .collect(Collectors.toList());
         }
+
+        private void makeSeatAvailable(int row, int column) {
+            getSeatFromStorage(row, column).makeAvailable();
+        }
     }
   learner_created: true
 - name: src/cinema/storage/CinemaStorage.java
@@ -471,63 +508,17 @@ files:
   text: |
     package cinema.storage;
 
-    import cinema.entities.AvailableSeats;
-    import cinema.entities.Seat;
+    import cinema.entities.response.AvailableSeatsResponse;
+    import cinema.entities.response.PurchasedTicketResponse;
+    import cinema.entities.response.ReturnTickedResponse;
 
     public interface CinemaStorage {
 
-        AvailableSeats getAvailableSeats();
+        AvailableSeatsResponse getAvailableSeats();
 
-        Seat purchaseSeat(int row, int column);
-    }
-  learner_created: true
-- name: src/cinema/entities/response/PurchasedTicketResponse.java
-  visible: true
-  learner_created: true
-- name: src/cinema/entities/response/AvailableSeatsResponse.java
-  visible: true
-  text: |
-    package cinema.entities;
+        PurchasedTicketResponse purchaseTicket(int row, int column);
 
-    import com.fasterxml.jackson.annotation.JsonProperty;
-
-    import java.util.*;
-
-    public class AvailableSeats {
-        @JsonProperty("total_rows")
-        private int rows;
-        @JsonProperty("total_columns")
-        private int columns;
-        @JsonProperty("available_seats")
-        private Collection<Seat> seats = Collections.emptyList();
-
-        public int getRows() {
-            return rows;
-        }
-
-        public AvailableSeats setRows(int rows) {
-            this.rows = rows;
-            return this;
-        }
-
-        public int getColumns() {
-            return columns;
-        }
-
-        public AvailableSeats setColumns(int columns) {
-            this.columns = columns;
-            return this;
-        }
-
-        public Collection<Seat> getSeats() {
-            return new ArrayList<>(seats);
-        }
-
-        public AvailableSeats setSeats(Collection<Seat> seats) {
-            this.seats = seats == null ? Collections.emptyList() : new ArrayList<>(seats);
-            return this;
-        }
-
+        ReturnTickedResponse returnTicket(String token);
     }
   learner_created: true
 - name: src/cinema/entities/request/PurchaseSeatRequest.java
@@ -535,20 +526,20 @@ files:
   text: |
     package cinema.entities.request;
 
-    public class PurchaseSeatBody {
+    public class PurchaseSeatRequest {
         public int row;
         public int column;
     }
   learner_created: true
 - name: src/cinema/entities/request/ReturnTicketRequest.java
   visible: true
-  learner_created: true
-- name: src/cinema/entities/response/ReturnTickedResponse.java
-  visible: true
+  text: |
+    package cinema.entities.request;
+
+    public class ReturnTicketRequest {
+        public String token;
+    }
   learner_created: true
 feedback_link: https://hyperskill.org/projects/189/stages/947/implement#comment
-status: Solved
-feedback:
-  message: Congratulations!
-  time: Fri, 30 Jul 2021 22:09:36 UTC
-record: -1
+status: Unchecked
+record: 5

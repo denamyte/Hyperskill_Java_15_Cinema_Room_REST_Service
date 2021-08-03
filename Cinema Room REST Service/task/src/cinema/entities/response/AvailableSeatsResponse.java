@@ -2,9 +2,14 @@ package cinema.entities.response;
 
 import cinema.entities.Seat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
+@Data
+@Accessors(chain = true)
 public class AvailableSeatsResponse {
     @JsonProperty("total_rows")
     private int rows;
@@ -12,32 +17,4 @@ public class AvailableSeatsResponse {
     private int columns;
     @JsonProperty("available_seats")
     private Collection<Seat> seats = Collections.emptyList();
-
-    public int getRows() {
-        return rows;
-    }
-
-    public AvailableSeatsResponse setRows(int rows) {
-        this.rows = rows;
-        return this;
-    }
-
-    public int getColumns() {
-        return columns;
-    }
-
-    public AvailableSeatsResponse setColumns(int columns) {
-        this.columns = columns;
-        return this;
-    }
-
-    public Collection<Seat> getSeats() {
-        return new ArrayList<>(seats);
-    }
-
-    public AvailableSeatsResponse setSeats(Collection<Seat> seats) {
-        this.seats = seats == null ? Collections.emptyList() : new ArrayList<>(seats);
-        return this;
-    }
-
 }

@@ -1,9 +1,9 @@
 package cinema.storage;
 
-import cinema.entities.response.AvailableSeatsResponse;
 import cinema.entities.Seat;
-import cinema.entities.response.PurchasedTicketResponse;
-import cinema.entities.response.ReturnTickedResponse;
+import cinema.entities.response.*;
+import cinema.storage.exception.TicketBadRequestException;
+import cinema.storage.exception.UnathorizedException;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -16,7 +16,8 @@ public class CinemaStorageInMemory implements CinemaStorage {
     private static final int ROW_COUNT = 9;
     private static final int COL_COUNT = 9;
     private final Map<String, Seat> seatMap;
-    private final Map<String, Seat> tokenToSeatMap = new HashMap<>();
+    // Token to Seat map
+    private final Map<String, Seat> purchasedSeatsMap = new HashMap<>();
 
     {
         seatMap = new LinkedHashMap<>();
@@ -47,18 +48,27 @@ public class CinemaStorageInMemory implements CinemaStorage {
         checkSeatIsAvailable(seat);
         seat.purchase();
         String token = UUID.randomUUID().toString();
-        tokenToSeatMap.put(token, seat);
+        purchasedSeatsMap.put(token, seat);
         return new PurchasedTicketResponse(token, seat);
     }
 
     @Override
-    public ReturnTickedResponse returnTicket(String token) {
-        Seat seat = tokenToSeatMap.remove(token);
+    public ReturnTicketResponse returnTicket(String token) {
+        Seat seat = purchasedSeatsMap.remove(token);
         if (seat == null) {
             throw new TicketBadRequestException("Wrong token!");
         }
         makeSeatAvailable(seat.getRow(), seat.getColumn());
-        return new ReturnTickedResponse(seat);
+        return new ReturnTicketResponse(seat);
+    }
+
+    @Override
+    public StatisticsResponse statistics(String password) {
+        checkPassword(password);
+        return new StatisticsResponse()
+                .setIncome(purchasedSeatsMap.values().stream().mapToInt(Seat::getPrice).sum())
+                .setAvailableSeats(seatMap.size() - purchasedSeatsMap.size())
+                .setPurchasedTickets(purchasedSeatsMap.size());
     }
 
     private Seat getSeatFromStorage(int row, int column) {
@@ -84,5 +94,11 @@ public class CinemaStorageInMemory implements CinemaStorage {
 
     private void makeSeatAvailable(int row, int column) {
         getSeatFromStorage(row, column).makeAvailable();
+    }
+
+    private void checkPassword(String password) {
+        if (!"super_secret".equals(password)) {
+            throw new UnathorizedException("The password is wrong!");
+        }
     }
 }

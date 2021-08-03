@@ -3,7 +3,7 @@ hyperskill_project:
   ide_files: https://stepik.org/media/attachments/lesson/539847/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: Fri, 30 Jul 2021 21:03:58 UTC
+update_date: Tue, 03 Aug 2021 20:31:28 UTC
 stages:
 - id: 945
   step: 13375
@@ -13,10 +13,10 @@ stages:
   is_completed: true
 - id: 947
   step: 13377
-  is_completed: true
+  is_completed: false
 - id: 948
   step: 13378
-  is_completed: false
+  is_completed: true
 topics:
   0:
   - title: Write, compile, and run
@@ -216,6 +216,12 @@ topics:
     theory_id: 13292
   - title: Handling requests with bodies
     theory_id: 13334
+  - title: Exception handling
+    theory_id: 8780
+  - title: Hierarchy of exceptions
+    theory_id: 3570
+  - title: Exception handling
+    theory_id: 3552
   2:
   - title: Exception handling
     theory_id: 8780

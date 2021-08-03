@@ -1,8 +1,6 @@
 package cinema.storage;
 
-import cinema.entities.response.AvailableSeatsResponse;
-import cinema.entities.response.PurchasedTicketResponse;
-import cinema.entities.response.ReturnTickedResponse;
+import cinema.entities.response.*;
 
 public interface CinemaStorage {
 
@@ -10,5 +8,7 @@ public interface CinemaStorage {
 
     PurchasedTicketResponse purchaseTicket(int row, int column);
 
-    ReturnTickedResponse returnTicket(String token);
+    ReturnTicketResponse returnTicket(String token);
+
+    StatisticsResponse statistics(String password);
 }

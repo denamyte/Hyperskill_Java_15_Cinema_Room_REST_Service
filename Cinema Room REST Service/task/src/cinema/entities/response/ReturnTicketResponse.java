@@ -2,17 +2,12 @@ package cinema.entities.response;
 
 import cinema.entities.Seat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-public class ReturnTickedResponse {
-
+@AllArgsConstructor
+@Getter
+public class ReturnTicketResponse {
     @JsonProperty("returned_ticket")
     private final Seat seat;
-
-    public ReturnTickedResponse(Seat seat) {
-        this.seat = seat;
-    }
-
-    public Seat getSeat() {
-        return seat;
-    }
 }

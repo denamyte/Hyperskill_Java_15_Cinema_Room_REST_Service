@@ -1,7 +1,11 @@
 package cinema.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
+@Getter
 public class Seat {
 
     private final int row;
@@ -9,28 +13,6 @@ public class Seat {
     private final int price;
     @JsonIgnore
     private boolean purchased;
-
-    public Seat(int row, int column, int price) {
-        this.row = row;
-        this.column = column;
-        this.price = price;
-    }
-
-    public int getRow() {
-        return row;
-    }
-
-    public int getColumn() {
-        return column;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public boolean isPurchased() {
-        return purchased;
-    }
 
     public void purchase() {
         this.purchased = true;
